@@ -14,6 +14,11 @@ const DB_FILE = path.join(__dirname, 'database.json');
 app.use(cors());
 app.use(express.json());
 
+// Main entry point for the backend
+app.get('/', (req, res) => {
+    res.send('<h1>JLEP Puzzle Backend: ONLINE</h1><p>Leaderboard endpoint: <a href="/leaderboard">/leaderboard</a></p>');
+});
+
 // Initialize database file if it doesn't exist
 if (!fs.existsSync(DB_FILE)) {
     fs.writeFileSync(DB_FILE, JSON.stringify([]));
@@ -44,8 +49,13 @@ app.get('/leaderboard', (req, res) => {
         return b.cleared.length - a.cleared.length;
     });
 
-    // Return the top 100
-    res.json(players.slice(0, 100));
+    // Return the top 100, but STRIP PASSWORDS for security
+    const sanitizedPlayers = players.slice(0, 100).map(p => {
+        const { password, ...publicData } = p;
+        return publicData;
+    });
+
+    res.json(sanitizedPlayers);
 });
 
 // POST /leaderboard - Insert or update a player's score
