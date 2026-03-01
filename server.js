@@ -165,5 +165,5 @@ app.put('/leaderboard/rename', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`JLEP Leaderboard Server running on http://localhost:${PORT}`);
+    console.log(`JLEP Leaderboard Server running on https://jlep-backend.onrender.com`);
 });
