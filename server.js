@@ -1,5 +1,5 @@
 // server.js
-// A simple Node.js backend for the JLEP Puzzle Global Leaderboard.
+// A simple Node.js backend for the Controlled Global Leaderboard.
 // Requires: npm install express cors
 
 const express = require('express');
@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Main entry point for the backend
 app.get('/', (req, res) => {
-    res.send('<h1>JLEP Puzzle Backend: ONLINE</h1><p>Leaderboard endpoint: <a href="/leaderboard">/leaderboard</a></p>');
+    res.send('<h1>Controlled Backend: ONLINE</h1><p>Leaderboard endpoint: <a href="/leaderboard">/leaderboard</a></p>');
 });
 
 // Initialize database file if it doesn't exist
@@ -165,5 +165,5 @@ app.put('/leaderboard/rename', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`JLEP Leaderboard Server running on https://jlep-backend.onrender.com`);
+    console.log(`Controlled Leaderboard Server running on https://jlep-backend.onrender.com`);
 });
