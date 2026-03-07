@@ -1,4 +1,4 @@
-// server.js
+// server.js v1.2.2
 // A simple Node.js backend for the Controlled Global Leaderboard.
 // Requires: npm install express cors
 
@@ -41,18 +41,31 @@ function saveLeaderboard(data) {
 app.get('/leaderboard', (req, res) => {
     let players = getLeaderboard();
 
-    // Sort logic: highest max level first. If tie, whoever has the most total clears.
+    // Sort logic: highest peak level first. If tie, whoever has the most total clears.
     players.sort((a, b) => {
-        const maxA = a.cleared.length > 0 ? Math.max(...a.cleared) : 0;
-        const maxB = b.cleared.length > 0 ? Math.max(...b.cleared) : 0;
-        if (maxB !== maxA) return maxB - maxA;
-        return b.cleared.length - a.cleared.length;
+        const getPeak = (p) => {
+            const levelNum = parseInt(p.level) || 0;
+            const clearedMax = (p.cleared && p.cleared.length > 0) ? Math.max(...p.cleared) : 0;
+            return Math.max(p.highestLevel || 0, levelNum, clearedMax);
+        };
+        const peakA = getPeak(a);
+        const peakB = getPeak(b);
+        
+        if (peakB !== peakA) return peakB - peakA;
+        return (b.cleared ? b.cleared.length : 0) - (a.cleared ? a.cleared.length : 0);
     });
 
     // Return the top 100, but STRIP PASSWORDS for security
     const sanitizedPlayers = players.slice(0, 100).map(p => {
         const { password, ...publicData } = p;
-        return publicData;
+        // Ensure highestLevel is present for display fallback
+        const levelNum = parseInt(p.level) || 0;
+        const clearedMax = (p.cleared && p.cleared.length > 0) ? Math.max(...p.cleared) : 0;
+        const peak = Math.max(p.highestLevel || 0, levelNum, clearedMax);
+        return {
+            ...publicData,
+            highestLevel: peak
+        };
     });
 
     res.json(sanitizedPlayers);
@@ -72,6 +85,7 @@ app.post('/leaderboard', (req, res) => {
     const newProfile = {
         name,
         level: level || 'None',
+        highestLevel: parseInt(req.body.highestLevel) || 0,
         cleared: Array.isArray(cleared) ? cleared : [],
         lastUpdated: new Date().toISOString()
     };
@@ -92,14 +106,14 @@ app.post('/leaderboard', (req, res) => {
             newProfile.password = players[existingIndex].password;
         }
 
-        // Update existing only if new max level is higher or equal
-        const oldMax = players[existingIndex].cleared.length > 0 ? Math.max(...players[existingIndex].cleared) : 0;
-        const newMax = newProfile.cleared.length > 0 ? Math.max(...newProfile.cleared) : 0;
+        // Maintain persistent highestLevel
+        const existingMax = players[existingIndex].highestLevel || 0;
+        const incomingMax = newProfile.highestLevel || 0;
+        newProfile.highestLevel = Math.max(existingMax, incomingMax);
 
-        if (newMax >= oldMax) {
-            players[existingIndex] = newProfile;
-            saveLeaderboard(players);
-        }
+        // Update profile
+        players[existingIndex] = newProfile;
+        saveLeaderboard(players);
     } else {
         // New player
         players.push(newProfile);
